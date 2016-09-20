@@ -1,0 +1,23 @@
+Package: RUBIC
+Type: Package
+Title: Recurrent DNA copy number break detection to identify driver
+        aberrations
+Version: 1.0.2
+Date: 2015-09-03
+Author: Ewald van Dyk (NKI), Nicola Bonzanni (eNPicom), Alvise Trevisan
+    (eNPicom)
+Maintainer: Lodewyk Wessels <l.wessels@nki.nl>
+Description: RUBIC detects recurrent copy number aberrations using copy number
+    breaks, rather than recurrently amplified or deleted regions. This allows for a
+    vastly simplified approach as recursive peak splitting procedures and repeated
+    re-estimation of the background model are avoided. Furthermore, the false
+    discovery rate is controlled on the level of called regions, rather than at the
+    probe level.
+License: Apache License (== 2.0)
+Imports: data.table (>= 1.9.4), pracma, digest, ggplot2, grid, gtable,
+        grDevices, methods
+Suggests: testthat, R.matlab
+LazyData: true
+RoxygenNote: 5.0.1
+NeedsCompilation: no
+Packaged: 2015-11-26 15:34:37 UTC; Nicola
