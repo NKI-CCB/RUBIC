@@ -268,7 +268,7 @@ plot.cna <- function(amp.profile=NULL, del.profile=NULL,
     }
 
   } else {
-    main.plot <- main.plot + geom_hline(aes(0), size=.2, color='grey', linetype="dashed") +
+    main.plot <- main.plot + geom_hline(aes(yintercept=0), size=.2, color='grey', linetype="dashed") +
       scale_y_continuous(name='Aggregate log ratios')
     rect.min.y <- -Inf
     rect.max.y <- +Inf
