@@ -135,7 +135,7 @@ preprocess.map.loc <- function(seg.CNA, markers, samples=NULL,
   # Finally all the the markers beloning to the segments of the samples
   # are grouped together to count the number of markers per segment.
   seg.markers <- seg.CNA[, foverlaps(markers[, .(Name, Chromosome, Position, Position2=Position)],
-                                     .SD,
+                                     copy(.SD),
                                      by.x=c('Chromosome', 'Position','Position2'),
                                      type='within', nomatch=0L)[, .(ProbesNo=.N), by=Segment],
                          .SDcols=c('Chromosome', 'Start', 'End', 'Segment'),
@@ -143,7 +143,7 @@ preprocess.map.loc <- function(seg.CNA, markers, samples=NULL,
 
   # Join the sample segments with location map
   map.loc <- seg.CNA[,unique(foverlaps(map.loc[,.(Probe, Chromosome, AbsPosition, Position, Position2=Position)],
-                                       .SD,
+                                       copy(.SD),
                                        by.x=c('Chromosome','Position','Position2'),
                                        type='within'),
                              by='Probe', fromLast=T), by=Sample][, Position2:=NULL]
