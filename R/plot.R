@@ -179,7 +179,7 @@ plot.genes.bar <- function(genes, min.x, max.x, focal.p=NULL, focal.n=NULL) {
 plot.cna <- function(amp.profile=NULL, del.profile=NULL,
                      segments.p=NULL, segments.n=NULL,
                      focal.p=NULL, focal.n=NULL,
-                     genes=NULL, steps=T, chromosome=NULL) {
+                     genes=NULL, steps=T, chromosome=NULL, offset.table=NULL) {
 
   min.x <- +Inf
   max.x <- -Inf
@@ -252,6 +252,56 @@ plot.cna <- function(amp.profile=NULL, del.profile=NULL,
     top.plot <- plot.genes.bar(genes, min.x, max.x, focal.p, focal.n)
   }
 
+  if (is.null(chromosome)){ 
+    if(!is.null(amp.profile) && !is.null(del.profile)) {
+      if (NROW(amp.profile) > 0) {
+        amp.profile[,Position := as.numeric(Position)]
+        amp.profile[,Position := .SD[,Position]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'Position')]
+        min.x <- suppressWarnings(min(min.x, amp.profile[,min(Position)]))
+        max.x <- suppressWarnings(max(max.x, amp.profile[,max(Position)]))
+      }
+      if (NROW(segments.p) > 0) {
+        segments.p[,Start := .SD[,Start]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'Start')]
+        segments.p[,End := .SD[,End]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'End')]
+        min.x <- suppressWarnings(min(min.x, segments.p[,min(Start)]))
+        max.x <- suppressWarnings(max(max.x, segments.p[,max(End)]))
+      }
+      if (NROW(focal.p) > 0) {
+        focal.p[,Start := as.numeric(Start)]
+        focal.p[,Start := .SD[,Start]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'Start')]
+        focal.p[,End := as.numeric(End)]
+        focal.p[,End := .SD[,End]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'End')]
+        min.x <- suppressWarnings(min(min.x, focal.p[,min(Start)]))
+        max.x <- suppressWarnings(max(max.x, focal.p[,max(End)]))
+      }
+      
+      if (NROW(del.profile) > 0) {
+        del.profile[,Position := as.numeric(Position)]
+        del.profile[,Position := .SD[,Position]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'Position')]
+        min.x <- suppressWarnings(min(min.x, del.profile[,min(Position)]))
+        max.x <- suppressWarnings(max(max.x, del.profile[,max(Position)]))
+        
+      }
+      if (NROW(segments.n) > 0) {
+        segments.n[,Start := .SD[,Start]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'Start')]
+        segments.n[,End := .SD[,End]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'End')]
+        min.x <- suppressWarnings(min(min.x, segments.n[,min(Start)]))
+        max.x <- suppressWarnings(max(max.x, segments.n[,max(End)]))
+        
+      }
+      if (NROW(focal.n) > 0) {
+        focal.n[,Start := as.numeric(Start)]
+        focal.n[,Start := .SD[,Start]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'Start')]
+        focal.n[,End := as.numeric(End)]
+        focal.n[,End := .SD[,End]+offset.table[.(.SD[,'Chromosome']),'max',mult='first',with=FALSE][,max], by=Chromosome, .SDcols=c('Chromosome', 'End')]
+        min.x <- suppressWarnings(min(min.x, focal.n[,min(Start)]))
+        max.x <- suppressWarnings(max(max.x, focal.n[,max(End)]))
+        
+      }
+    }  
+ 
+  }
+  
   main.plot <- ggplot(NULL, aes(x=Position, y=LogRatio))
 
   if(NROW(amp.profile) > 0)
@@ -309,6 +359,10 @@ plot.cna <- function(amp.profile=NULL, del.profile=NULL,
     }
   }
 
+  if (is.null(chromosome)) {
+    main.plot <- main.plot + geom_vline(xintercept=offset.table[,max][-c(1)])
+  }  
+  
   main.plot <- main.plot + scale_x_continuous(labels=location.format, limits=c(min.x, max.x), expand=c(0, 0)) +
     theme(panel.background=element_blank(),
           panel.grid.major=element_blank(),
@@ -317,7 +371,7 @@ plot.cna <- function(amp.profile=NULL, del.profile=NULL,
           axis.ticks=element_line(color='black'),
           axis.title.x=element_blank()
           )
-
+  
   main.grob <- ggplotGrob(main.plot)
 
   if (NROW(genes) > 0) {
@@ -360,7 +414,7 @@ generate.all.plots.eps <- function(dir,
                                    width=11, height=5) {
 
   dir.create(dir)
-
+  
   a.prof <- amp.profile(map.loc, amp.level)
   d.prof <- del.profile(map.loc, del.level)
   focal.p <- focal.events.as.data.table(focal.p.events)
@@ -397,4 +451,34 @@ generate.all.plots.eps <- function(dir,
              genes=genes, steps=steps, chromosome=chromosome)
     dev.off()
   }
+  
+  offset.table <- markers[, .(max=max(Position)), by=Chromosome]
+  offset.table[, max:=c(0,max[0:(length(max)-1)])]
+  offset.table[,max := cumsum(max)]
+  
+  a.file.name <- file.path(dir, paste0('chromsome_all_all.', extension))  
+  p.file.name <- file.path(dir, paste0('chromsome_all_gains.', extension))
+  n.file.name <- file.path(dir, paste0('chromosome_all_losses.', extension))
+  
+  cairo_ps(a.file.name, width=width, height=height)
+  plot.cna(amp.profile=a.prof, del.profile=d.prof,
+           segments.p=segs.p, segments.n=segs.n,
+           focal.p=focal.p, focal.n=focal.n,
+           genes=NULL, steps=steps, offset.table=offset.table) # genes NULL so always whole genome
+  dev.off()
+  
+  cairo_ps(p.file.name, width=width, height=height)
+  plot.cna(amp.profile=a.prof,
+           segments.p=segs.p,
+           focal.p=focal.p,
+           genes=NULL, steps=steps, offset.table=offset.table) # genes NULL so always whole genome
+  dev.off()     
+  
+  cairo_ps(n.file.name, width=width, height=height)
+  plot.cna(del.profile=d.prof,
+           segments.n=segs.n,
+           focal.n=focal.n,
+           genes=NULL, steps=steps, offset.table=offset.table) # genes NULL so always whole genome
+  dev.off()  
+  
 }
