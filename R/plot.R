@@ -111,7 +111,7 @@ segments.as.data.table <- function(map.loc.agr, segments, markers) {
 #'
 #' @param x A vector of numbers.
 #' @return A vector of strings of formatted numbers.
-#' 
+#'
 #' @noRd
 location.format <- function(x) {
   format(x, scientific=F, trim=T)
@@ -174,7 +174,7 @@ plot.genes.bar <- function(genes, min.x, max.x, focal.p=NULL, focal.n=NULL) {
 #' @param steps A boolean value indicating whether to plot the segments as steps
 #'              or horizontal segments.
 #' @param chromosome The chromosome to be plotted.
-#' 
+#'
 #' @noRd
 plot.cna <- function(amp.profile=NULL, del.profile=NULL,
                      segments.p=NULL, segments.n=NULL,
@@ -268,7 +268,7 @@ plot.cna <- function(amp.profile=NULL, del.profile=NULL,
     }
 
   } else {
-    main.plot <- main.plot + geom_hline(aes(0), size=.2, color='grey', linetype="dashed") +
+    main.plot <- main.plot + geom_hline(aes(yintercept=0), size=.2, color='grey', linetype="dashed") +
       scale_y_continuous(name='Aggregate log ratios')
     rect.min.y <- -Inf
     rect.max.y <- +Inf
