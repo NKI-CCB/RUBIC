@@ -36,7 +36,7 @@ read.seg.file <- function(seg.file, sample=1, chromosome=2, start=3, end=4, log.
     stop(paste('The segments file', seg.file, 'cannot be found or read'))
   # Order the columns based on their indices
   columns <- sort(c(sample=sample, chromosome=chromosome, start=start, end=end, log.ratio=log.ratio))
-  seg.CNA <- fread(seg.file, sep='\t', select=columns, header=header)
+  seg.CNA <- fread(seg.file, sep='\t', select=unname(columns), header=header)
   # Associate the new index to the columns
   columns <- setNames(1:5, names(columns))
   # Reorder the columns
@@ -98,18 +98,17 @@ preprocess.map.loc <- function(seg.CNA, markers, samples=NULL,
   
   # Create the location mapping
   # Counter necessary to number the probes
-  p.counter <- 0
   # Join data.tables for all chromosomes adding an incremental probe name
   map.loc <- rbindlist(Map(function(x) {
     # Set all unique position pulling together all starts and ends in seg.CNA for all chromosomes
     positions <- unique(sort(c(seg.CNA[Chromosome==x]$Start, seg.CNA[Chromosome==x]$End)))
-    # Generate the names of the probes as factors to keep an order which is not alphabetical
-    p.num <- length(positions)
-    probe.names <- paste0('P', p.counter+1:p.num)
-    p.counter <<- p.counter + p.num
-    probes <- ordered(probe.names, levels=probe.names)
-    data.table(Probe=probes, Chromosome=x, Position=positions)
+    data.table(Chromosome=x, Position=positions)
   }, unique(seg.CNA$Chromosome)))
+
+  # Generate the names of the probes as factors to keep an order which is not alphabetical
+  probe.names <- paste0("P", 1:nrow(map.loc))
+  probes <- ordered(probe.names, levels=probe.names)
+  map.loc[, `:=`(Probe, probes)]
   
   # NOTE: Specs show allow chromosome filtering, but chromosome filtering
   #       for CNA data type appears disabled in original sources
@@ -323,7 +322,8 @@ ensure.min.probes <- function(map.loc, markers, min.probes=2.6e5) {
   setkey(map.loc, Sample, Chromosome, Position)
   # Recompute probe names as factors to keep an order which is not alphabetical
   probe.names <- paste0('P', 1:map.loc[,.N,by=Sample][1]$N)
-  map.loc[,Probe:=ordered(probe.names, levels=probe.names)]
+  samples.num <- length(unique(map.loc$Sample))
+  map.loc[, `:=`(Probe, rep(ordered(probe.names, levels=probe.names), samples.num))]
   
   # Interpolate values based on the available positions
   interpolate.column <- function(positions, columnn.values) {

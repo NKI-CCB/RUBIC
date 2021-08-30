@@ -456,8 +456,8 @@ generate.all.plots.eps <- function(dir,
   offset.table[, max:=c(0,max[0:(length(max)-1)])]
   offset.table[,max := cumsum(max)]
   
-  a.file.name <- file.path(dir, paste0('chromsome_all_all.', extension))  
-  p.file.name <- file.path(dir, paste0('chromsome_all_gains.', extension))
+  a.file.name <- file.path(dir, paste0('chromosome_all_all.', extension))  
+  p.file.name <- file.path(dir, paste0('chromosome_all_gains.', extension))
   n.file.name <- file.path(dir, paste0('chromosome_all_losses.', extension))
   
   cairo_ps(a.file.name, width=width, height=height)
